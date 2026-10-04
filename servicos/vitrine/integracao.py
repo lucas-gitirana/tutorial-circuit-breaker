@@ -28,21 +28,18 @@ disjuntor = CircuitBreaker(
 
 def buscar_no_servico(produto_id: str) -> list:
     """Chamada HTTP crua ao serviço de recomendações."""
-    # TODO (Etapa 2): sem timeout, esta chamada espera o tempo que o outro
-    # serviço quiser. Passe timeout=TIMEOUT_SEGUNDOS para o requests.get.
-    resposta = requests.get(f"{URL_RECOMENDACOES}/recomendacoes/{produto_id}")
+    resposta = requests.get(f"{URL_RECOMENDACOES}/recomendacoes/{produto_id}", timeout=TIMEOUT_SEGUNDOS)
     resposta.raise_for_status()  # HTTP 4xx/5xx vira exceção
     return resposta.json()["recomendacoes"]
 
 
 def obter_recomendacoes(produto_id: str) -> tuple[list, str]:
     """Devolve (recomendações, origem), onde origem é "servico" ou "fallback"."""
-    # TODO (Etapa 2): se buscar_no_servico lançar requests.RequestException
-    # (timeout, conexão recusada, HTTP 500...), devolva o fallback:
-    #     return RECOMENDACOES_PADRAO, "fallback"
-    #
-    # TODO (Etapa 5): em vez de chamar buscar_no_servico diretamente, passe a
-    # chamada pelo circuit breaker:
-    #     disjuntor.chamar(buscar_no_servico, produto_id)
-    # e trate também CircuitoAbertoError devolvendo o fallback.
-    return buscar_no_servico(produto_id), "servico"
+    try:
+        return disjuntor.chamar(buscar_no_servico, produto_id), "servico"
+    except CircuitoAbertoError:
+        print("[vitrine] circuito ABERTO: usando fallback sem chamar recomendacoes")
+        return RECOMENDACOES_PADRAO, "fallback"
+    except requests.RequestException as erro:
+        print(f"[vitrine] falha ao chamar recomendacoes ({type(erro).__name__}): usando fallback")
+        return RECOMENDACOES_PADRAO, "fallback"

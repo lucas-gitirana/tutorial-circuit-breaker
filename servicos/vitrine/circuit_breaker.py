@@ -63,26 +63,25 @@ class CircuitBreaker:
     # -----------------------------------------------------------------------
     def _permite_chamada(self) -> bool:
         """Decide se a chamada pode seguir para a dependência."""
-        # TODO (Etapa 3): se o circuito está ABERTO, devolva False (falhar rápido).
-        #
-        # TODO (Etapa 4): se está ABERTO mas já se passaram self.tempo_aberto
-        # segundos desde self.aberto_em (use self.relogio() para saber a hora
-        # atual), mude para MEIO_ABERTO e devolva True: é a chamada de teste.
+        if self.estado == ABERTO:
+            # Etapa 4: passado o tempo_aberto, deixa UMA chamada de teste passar
+            if self.relogio() - self.aberto_em >= self.tempo_aberto:
+                self.estado = MEIO_ABERTO
+                return True
+            # Etapa 3: aberto = falhar rápido
+            return False
         return True
 
     def _registrar_falha(self) -> None:
         """Chamado quando a função protegida lançou uma exceção."""
-        # TODO (Etapa 3): some 1 em self.falhas_consecutivas. Ao atingir
-        # self.limite_falhas, mude para ABERTO e guarde self.aberto_em = self.relogio().
-        #
-        # TODO (Etapa 4): se a falha aconteceu em MEIO_ABERTO (a chamada de
-        # teste falhou), volte para ABERTO na hora e reinicie self.aberto_em.
-        pass
+        self.falhas_consecutivas += 1
+        # Etapa 4: em MEIO_ABERTO, a chamada de teste falhou -> volta a ABERTO
+        if self.estado == MEIO_ABERTO or self.falhas_consecutivas >= self.limite_falhas:
+            self.estado = ABERTO
+            self.aberto_em = self.relogio()
 
     def _registrar_sucesso(self) -> None:
         """Chamado quando a função protegida terminou sem exceção."""
-        # TODO (Etapa 3): zere self.falhas_consecutivas.
-        #
-        # TODO (Etapa 4): se o estado é MEIO_ABERTO (a chamada de teste deu
-        # certo), feche o circuito: estado = FECHADO.
-        pass
+        self.falhas_consecutivas = 0
+        # Etapa 4: em MEIO_ABERTO, a chamada de teste deu certo -> FECHADO
+        self.estado = FECHADO
