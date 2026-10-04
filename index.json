@@ -1,0 +1,53 @@
+{
+  "title": "Padrão Circuit Breaker na prática",
+  "description": "Proteja um microsserviço contra falhas em cascata com timeout, fallback e um circuit breaker de três estados implementado do zero.",
+  "details": {
+    "intro": {
+      "text": "tutorial/intro.md",
+      "background": "tutorial/setup.sh"
+    },
+    "steps": [
+      {
+        "title": "Provocando falhas em cascata",
+        "text": "tutorial/etapa-01.md",
+        "verify": "tutorial/verificar-etapa-01.sh",
+        "file": { "name": "servicos/recomendacoes/app.py", "line": 1 },
+        "points": 10
+      },
+      {
+        "title": "Falhar rápido: timeout e fallback",
+        "text": "tutorial/etapa-02.md",
+        "verify": "tutorial/verificar-etapa-02.sh",
+        "file": { "name": "servicos/vitrine/integracao.py", "line": 31 },
+        "points": 20
+      },
+      {
+        "title": "Abrindo o circuito",
+        "text": "tutorial/etapa-03.md",
+        "verify": "tutorial/verificar-etapa-03.sh",
+        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 64 },
+        "points": 25
+      },
+      {
+        "title": "Recuperando: o estado MEIO_ABERTO",
+        "text": "tutorial/etapa-04.md",
+        "verify": "tutorial/verificar-etapa-04.sh",
+        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 64 },
+        "points": 25
+      },
+      {
+        "title": "Circuit breaker em ação",
+        "text": "tutorial/etapa-05.md",
+        "verify": "tutorial/verificar-etapa-05.sh",
+        "file": { "name": "servicos/vitrine/integracao.py", "line": 38 },
+        "points": 20
+      }
+    ],
+    "finish": {
+      "text": "tutorial/finalizacao.md"
+    }
+  },
+  "backend": {
+    "imageid": "docker-compose:tutorial-circuit-breaker"
+  }
+}

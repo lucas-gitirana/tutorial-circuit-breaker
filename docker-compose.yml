@@ -1,0 +1,36 @@
+# Ambiente do tutorial Circuit Breaker.
+#   vitrine       -> página de produto, chama o recomendacoes (http://localhost:8021)
+#   recomendacoes -> dependência instável, com painel de falhas (http://localhost:8022)
+name: tutorial-circuit-breaker
+
+services:
+  vitrine:
+    build: ./servicos
+    volumes:
+      - ./servicos/vitrine:/app   # código montado: basta reiniciar o container
+    environment:
+      URL_RECOMENDACOES: http://recomendacoes:8000
+      TIMEOUT_RECOMENDACOES_SEGUNDOS: "1"
+      CB_LIMITE_FALHAS: "3"
+      CB_TEMPO_ABERTO_SEGUNDOS: "10"
+    ports:
+      - "8021:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/saude')"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    depends_on:
+      - recomendacoes
+
+  recomendacoes:
+    build: ./servicos
+    volumes:
+      - ./servicos/recomendacoes:/app
+    ports:
+      - "8022:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/saude')"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
