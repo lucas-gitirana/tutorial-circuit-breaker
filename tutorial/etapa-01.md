@@ -1,52 +1,66 @@
-# Etapa 1 — Provocando falhas em cascata
+![Mapa: visão geral](tutorial/img/mapa-geral.svg)
 
-**Objetivo:** ver o que acontece com a vitrine quando a dependência dela falha.
+📍 **Você está aqui:** conhecendo as peças do mapa.
 
-## 1. Tudo funcionando
+## 1. Veja os containers
 
 ```bash
-curl -s -w '\n' localhost:8021/produtos/1
+docker compose ps
 ```
 
-A resposta junta os dados do produto e as `recomendacoes` vindas do outro
-serviço (`"origem_recomendacoes": "servico"`).
+Devem aparecer **2 containers** com estado `running (healthy)`:
 
-Para acompanhar várias chamadas de uma vez, use o script auxiliar. Ele mostra,
-para cada chamada, o status HTTP, o tempo total e de onde vieram as recomendações:
+| Container | No mapa |
+| --- | --- |
+| `vitrine` | monta a página do produto (porta 8021). O **disjuntor** vai morar aqui dentro |
+| `recomendacoes` | sugere outros produtos (porta 8022). Tem o **painel de falhas** |
+
+O `docker-compose.yml`, aberto ao lado, descreve esses dois containers.
+
+## 2. Peça uma página de produto
+
+**`GET http://localhost:8021/produtos/1`**
+
+```bash
+curl -s localhost:8021/produtos/1 -w '← HTTP %{http_code}\n'
+```
+
+```text
+{
+  "id": "1",
+  "nome": "Teclado mecânico",
+  "preco": 349.9,
+  "recomendacoes": [ "Mouse sem fio", "Mousepad gamer", "Suporte para notebook" ],
+  "origem_recomendacoes": "servico",
+  "circuito": "FECHADO",
+  "tempo_recomendacoes_ms": 10
+}
+← HTTP 200
+```
+
+| Repare em | O que significa |
+| --- | --- |
+| `"origem_recomendacoes": "servico"` | as recomendações vieram do serviço `recomendacoes` |
+| `"tempo_recomendacoes_ms": 10` | quanto a vitrine **esperou** pelo recomendacoes |
+| `"circuito": "FECHADO"` | o estado do disjuntor. Por enquanto ele só existe no nome: você vai construí-lo |
+
+## 3. O atalho para várias chamadas
+
+Nas próximas etapas, você vai pedir a página várias vezes seguidas. Este
+script faz isso e resume cada resposta numa linha:
 
 ```bash
 bash tutorial/chamar-vitrine.sh 3
 ```
 
-## 2. Dependência lenta
-
-Coloque o `recomendacoes` no modo **lento** (5 segundos por resposta):
-
-```bash
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "lento"}'
-bash tutorial/chamar-vitrine.sh 2
+```text
+#1  HTTP 200   0.01s  origem=servico   circuito=FECHADO
+#2  HTTP 200   0.01s  origem=servico   circuito=FECHADO
+#3  HTTP 200   0.01s  origem=servico   circuito=FECHADO
 ```
 
-Cada página da vitrine agora leva **5 segundos**. A vitrine está saudável, mas
-fica refém da dependência. Com muitos usuários, as threads da vitrine se
-esgotariam esperando, e ela pararia de responder até as páginas que não usam
-recomendações.
+> Algum container não está `healthy`? Rode `docker compose up -d --build --wait` de novo.
 
-## 3. Dependência com erro
+## 4. Clique em Verificar ✔
 
-```bash
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "erro"}'
-bash tutorial/chamar-vitrine.sh 2
-```
-
-A vitrine devolve **HTTP 502**: a falha do `recomendacoes` virou falha da
-vitrine. Um item secundário da página (as recomendações) derrubou a página
-inteira. Essa é a **falha em cascata**.
-
-## 4. Volte ao normal
-
-```bash
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "normal"}'
-```
-
-Clique em **Verificar** para concluir a etapa.
+A verificação confere se os dois serviços estão respondendo.

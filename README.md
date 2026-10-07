@@ -5,7 +5,7 @@ Breaker**. Você provoca falhas em cascata entre dois microsserviços e protege
 o serviço consumidor com timeout, fallback e um circuit breaker de três
 estados (FECHADO, ABERTO e MEIO_ABERTO) escrito do zero.
 
-**Duração estimada:** 35 minutos · 5 etapas com avaliação automática.
+11 etapas curtas, todas com avaliação automática.
 
 ## Como começar
 
@@ -39,11 +39,13 @@ tutorial aparece na aba **Tutoriais Interativos** da barra lateral. Clique em
 index.json                 definição do tutorial (lida pela extensão)
 docker-compose.yml         vitrine (8021) + recomendacoes (8022)
 servicos/
-  vitrine/                 serviço consumidor: integracao.py e circuit_breaker.py
+  vitrine/integracao.py    chamada ao recomendacoes: timeout, fallback e disjuntor
+  vitrine/circuit_breaker.py  o disjuntor de três estados
   recomendacoes/           dependência instável, com painel de falhas
-tutorial/chamar-vitrine.sh chama a vitrine N vezes e resume cada resposta
 tutorial/
   *.md                     texto de cada etapa
+  chamar-vitrine.sh        chama a vitrine N vezes e resume cada resposta
+  img/                     diagramas "você está aqui" (gerados por gerar_mapas.py)
   verificar-etapa-NN.sh    avaliação automática de cada etapa
   verificacoes/            checagens em Python (só biblioteca padrão)
 ```
@@ -53,8 +55,8 @@ tutorial/
 | Sintoma | O que fazer |
 | --- | --- |
 | `Connection refused` nas verificações | `docker compose up -d --build --wait` e confira `docker compose ps` |
-| Alterei o código e nada mudou | reinicie o serviço: `docker compose restart <servico>` |
-| A vitrine continua com fallback | o `recomendacoes` está em modo normal? `curl localhost:8022/falhas` |
+| Alterei o código e nada mudou | salve o arquivo (`Ctrl+S`): os serviços recarregam sozinhos. Se não voltar, veja `docker compose logs vitrine --tail 20` |
+| A vitrine continua com fallback | o `recomendacoes` está em modo normal (`curl localhost:8022/falhas`)? O circuito está aberto (`curl localhost:8021/circuito`)? Espere 10 s |
 | Quero recomeçar do zero | `docker compose down && docker compose up -d --build --wait` |
 
 O código completo de referência fica na branch **`solucao`**.

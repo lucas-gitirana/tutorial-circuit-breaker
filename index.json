@@ -1,6 +1,6 @@
 {
   "title": "Padrão Circuit Breaker na prática",
-  "description": "Proteja um microsserviço contra falhas em cascata com timeout, fallback e um circuit breaker de três estados implementado do zero.",
+  "description": "Proteja um microsserviço contra falhas em cascata com timeout, fallback e um circuit breaker de três estados escrito do zero.",
   "details": {
     "intro": {
       "text": "tutorial/intro.md",
@@ -8,39 +8,81 @@
     },
     "steps": [
       {
-        "title": "Provocando falhas em cascata",
+        "title": "As peças do mapa",
         "text": "tutorial/etapa-01.md",
         "verify": "tutorial/verificar-etapa-01.sh",
-        "file": { "name": "servicos/recomendacoes/app.py", "line": 1 },
+        "file": { "name": "docker-compose.yml", "line": 7 },
+        "points": 5
+      },
+      {
+        "title": "Falha em cascata: erro",
+        "text": "tutorial/etapa-02.md",
+        "verify": "tutorial/verificar-etapa-02.sh",
+        "file": { "name": "servicos/recomendacoes/app.py", "line": 51 },
+        "points": 5
+      },
+      {
+        "title": "Falha em cascata: lentidão",
+        "text": "tutorial/etapa-03.md",
+        "verify": "tutorial/verificar-etapa-03.sh",
+        "file": { "name": "servicos/recomendacoes/app.py", "line": 53 },
+        "points": 5
+      },
+      {
+        "title": "Timeout: não esperar para sempre",
+        "text": "tutorial/etapa-04.md",
+        "verify": "tutorial/verificar-etapa-04.sh",
+        "file": { "name": "servicos/vitrine/integracao.py", "line": 34 },
         "points": 10
       },
       {
-        "title": "Falhar rápido: timeout e fallback",
-        "text": "tutorial/etapa-02.md",
-        "verify": "tutorial/verificar-etapa-02.sh",
-        "file": { "name": "servicos/vitrine/integracao.py", "line": 31 },
-        "points": 20
-      },
-      {
-        "title": "Abrindo o circuito",
-        "text": "tutorial/etapa-03.md",
-        "verify": "tutorial/verificar-etapa-03.sh",
-        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 64 },
-        "points": 25
-      },
-      {
-        "title": "Recuperando: o estado MEIO_ABERTO",
-        "text": "tutorial/etapa-04.md",
-        "verify": "tutorial/verificar-etapa-04.sh",
-        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 64 },
-        "points": 25
-      },
-      {
-        "title": "Circuit breaker em ação",
+        "title": "Fallback: o plano B",
         "text": "tutorial/etapa-05.md",
         "verify": "tutorial/verificar-etapa-05.sh",
-        "file": { "name": "servicos/vitrine/integracao.py", "line": 38 },
-        "points": 20
+        "file": { "name": "servicos/vitrine/integracao.py", "line": 45 },
+        "points": 10
+      },
+      {
+        "title": "Disjuntor: contar e abrir",
+        "text": "tutorial/etapa-06.md",
+        "verify": "tutorial/verificar-etapa-06.sh",
+        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 85 },
+        "points": 10
+      },
+      {
+        "title": "Disjuntor: aberto, falhar rápido",
+        "text": "tutorial/etapa-07.md",
+        "verify": "tutorial/verificar-etapa-07.sh",
+        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 70 },
+        "points": 10
+      },
+      {
+        "title": "Disjuntor: a chamada de teste",
+        "text": "tutorial/etapa-08.md",
+        "verify": "tutorial/verificar-etapa-08.sh",
+        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 65 },
+        "points": 10
+      },
+      {
+        "title": "Disjuntor: fechar ou reabrir",
+        "text": "tutorial/etapa-09.md",
+        "verify": "tutorial/verificar-etapa-09.sh",
+        "file": { "name": "servicos/vitrine/circuit_breaker.py", "line": 80 },
+        "points": 10
+      },
+      {
+        "title": "Ligando o disjuntor na vitrine",
+        "text": "tutorial/etapa-10.md",
+        "verify": "tutorial/verificar-etapa-10.sh",
+        "file": { "name": "servicos/vitrine/integracao.py", "line": 45 },
+        "points": 15
+      },
+      {
+        "title": "O circuito se recupera sozinho",
+        "text": "tutorial/etapa-11.md",
+        "verify": "tutorial/verificar-etapa-11.sh",
+        "file": { "name": "docker-compose.yml", "line": 16 },
+        "points": 10
       }
     ],
     "finish": {

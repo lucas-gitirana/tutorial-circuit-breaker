@@ -1,55 +1,52 @@
-# Etapa 2 — Falhar rápido: timeout e fallback
+![Mapa: falha em cascata](tutorial/img/mapa-cascata.svg)
 
-**Objetivo:** aplicar o primeiro princípio, **falhar rápido**, e degradar com
-elegância em vez de devolver erro.
+📍 **Você está aqui:** no caminho de uma página, de ponta a ponta. Agora você
+vai **quebrar** o recomendacoes e ver o que acontece com a vitrine.
 
-O arquivo `servicos/vitrine/integracao.py` foi aberto ao lado. Ele tem duas funções:
+## 1. Ligue o modo "erro" no painel de falhas
 
-- `buscar_no_servico`: a chamada HTTP crua ao `recomendacoes`;
-- `obter_recomendacoes`: o que a vitrine usa. Devolve `(lista, origem)`.
+O painel de falhas é uma rota do recomendacoes. No modo **`erro`**, ele
+responde **HTTP 500** a todo pedido, como um serviço com um bug ou com o banco
+fora do ar (veja o `if modo == "erro"` no arquivo aberto ao lado).
 
-## O que fazer
+**`POST http://localhost:8022/falhas`**
 
-**1. Timeout.** Em `buscar_no_servico`, passe `timeout=TIMEOUT_SEGUNDOS` para o
-`requests.get`. O valor (1 segundo) vem da variável de ambiente
-`TIMEOUT_RECOMENDACOES_SEGUNDOS` do `docker-compose.yml`.
-
-**2. Fallback.** Em `obter_recomendacoes`, envolva a chamada em `try/except`.
-Se `buscar_no_servico` lançar `requests.RequestException` (timeout, conexão
-recusada ou HTTP 500), devolva a resposta alternativa:
-
-```python
-return RECOMENDACOES_PADRAO, "fallback"
+```json
+{ "modo": "erro" }
 ```
 
-> **Fallback** é o "plano B": uma resposta menos boa, porém útil. Aqui, uma
-> lista genérica de produtos. A página do produto continua funcionando sem as
-> recomendações personalizadas.
+```bash
+curl -s -X POST localhost:8022/falhas \
+  -H 'Content-Type: application/json' \
+  -d '{"modo": "erro"}' \
+  -w '← HTTP %{http_code}\n'
+```
 
-## Teste no serviço
+## 2. Peça a página do produto
 
 ```bash
-docker compose restart vitrine && sleep 2
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "lento"}'
 bash tutorial/chamar-vitrine.sh 3
 ```
 
-Agora cada chamada leva cerca de **1 segundo** e devolve `origem=fallback`.
-Teste também o modo `erro`, que deve dar HTTP 200 com fallback:
-
-```bash
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "erro"}'
-bash tutorial/chamar-vitrine.sh 3
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "normal"}'
+```text
+#1  HTTP 502   0.00s  A vitrine falhou porque o serviço de recomendações falhou: HTTPError
+#2  HTTP 502   0.01s  A vitrine falhou porque o serviço de recomendações falhou: HTTPError
+#3  HTTP 502   0.06s  A vitrine falhou porque o serviço de recomendações falhou: HTTPError
 ```
 
-## Ainda não é o suficiente
+😱 A vitrine está no ar, tem o nome e o preço do produto... e mesmo assim
+devolveu **502**. O cliente não vê **nada** da página.
 
-Repare que a vitrine **continua chamando** o `recomendacoes` toda vez, mesmo
-sabendo que ele está com problema. Cada página ainda paga 1 segundo de
-espera, e o serviço doente segue recebendo carga, o que dificulta a
-recuperação. Falta o segundo princípio: **parar de insistir**. É aí que entra
-o circuit breaker.
+## 3. Isso é falha em cascata
 
-Clique em **Verificar**. A verificação muda o modo do `recomendacoes` e mede
-o tempo de resposta da vitrine.
+| | O que falhou | O que o cliente viu |
+| --- | --- | --- |
+| Esperado | só as recomendações (um **detalhe**) | a página, sem as recomendações |
+| **O que aconteceu** | só as recomendações | **erro na página inteira** |
+
+A falha do recomendacoes **escorreu** para a vitrine. Se outros serviços
+dependessem da vitrine, cairiam também, como peças de dominó.
+
+## 4. Clique em Verificar ✔
+
+> Deixe o painel no modo `erro`: a verificação confere isso.

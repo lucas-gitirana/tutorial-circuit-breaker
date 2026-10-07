@@ -15,16 +15,19 @@ Estados:
                      ABERTO ◀──(chamada de teste falhou)
 
 Este módulo não conhece Flask nem HTTP: protege QUALQUER função. O relógio é
-injetável para que os testes controlem a passagem do tempo.
+injetável para que as verificações controlem a passagem do tempo.
 """
 from __future__ import annotations
 
+import logging
 import time
 from typing import Callable
 
 FECHADO = "FECHADO"
 ABERTO = "ABERTO"
 MEIO_ABERTO = "MEIO_ABERTO"
+
+log = logging.getLogger("circuito")
 
 
 class CircuitoAbertoError(Exception):
@@ -36,13 +39,8 @@ class CircuitBreaker:
                  relogio: Callable[[], float] = time.monotonic) -> None:
         self.limite_falhas = limite_falhas  # falhas SEGUIDAS para abrir o circuito
         self.tempo_aberto = tempo_aberto    # segundos em ABERTO antes de testar de novo
-        self.relogio = relogio
+        self.relogio = relogio              # devolve a hora atual, em segundos
         self.reiniciar()
-
-    def reiniciar(self) -> None:
-        self.estado = FECHADO
-        self.falhas_consecutivas = 0
-        self.aberto_em: float | None = None  # instante em que o circuito abriu
 
     def chamar(self, funcao: Callable, *args, **kwargs):
         """Executa ``funcao(*args, **kwargs)`` protegida pelo circuit breaker."""
@@ -59,30 +57,68 @@ class CircuitBreaker:
         return resultado
 
     # -----------------------------------------------------------------------
-    # Etapas 3 e 4: complete os três métodos abaixo.
+    # Etapas 6 a 9: você vai completar os três métodos abaixo.
     # -----------------------------------------------------------------------
     def _permite_chamada(self) -> bool:
         """Decide se a chamada pode seguir para a dependência."""
-        # TODO (Etapa 3): se o circuito está ABERTO, devolva False (falhar rápido).
-        #
-        # TODO (Etapa 4): se está ABERTO mas já se passaram self.tempo_aberto
-        # segundos desde self.aberto_em (use self.relogio() para saber a hora
-        # atual), mude para MEIO_ABERTO e devolva True: é a chamada de teste.
+
+        # ═══ Etapa 8 · MEIO_ABERTO: já passou tempo_aberto? ════════════════
+        # ✏️  Escreva aqui o `if` que libera a chamada de teste.
+
+
+
+        # ═══ Etapa 7 · ABERTO: falhar rápido ═══════════════════════════════
+        # ✏️  Escreva aqui o `if` que recusa a chamada.
+
+
+
         return True
 
     def _registrar_falha(self) -> None:
         """Chamado quando a função protegida lançou uma exceção."""
-        # TODO (Etapa 3): some 1 em self.falhas_consecutivas. Ao atingir
-        # self.limite_falhas, mude para ABERTO e guarde self.aberto_em = self.relogio().
-        #
-        # TODO (Etapa 4): se a falha aconteceu em MEIO_ABERTO (a chamada de
-        # teste falhou), volte para ABERTO na hora e reinicie self.aberto_em.
-        pass
+
+        # ═══ Etapa 9 · MEIO_ABERTO: a chamada de teste falhou ══════════════
+        # ✏️  Escreva aqui o `if` que reabre o circuito na hora.
+
+
+
+        # ═══ Etapa 6 · contar a falha e, no limite, ABRIR ══════════════════
+        # ✏️  Escreva aqui as 4 linhas: somar 1 e, se chegou ao limite, abrir.
+
+
 
     def _registrar_sucesso(self) -> None:
         """Chamado quando a função protegida terminou sem exceção."""
-        # TODO (Etapa 3): zere self.falhas_consecutivas.
-        #
-        # TODO (Etapa 4): se o estado é MEIO_ABERTO (a chamada de teste deu
-        # certo), feche o circuito: estado = FECHADO.
-        pass
+
+        # ═══ Etapa 6 · um sucesso zera a contagem ══════════════════════════
+        # ✏️  Escreva aqui a linha que zera as falhas seguidas.
+
+
+
+        # ═══ Etapa 9 · MEIO_ABERTO: a chamada de teste deu certo ═══════════
+        # ✏️  Escreva aqui o `if` que fecha o circuito.
+
+
+
+    # -----------------------------------------------------------------------
+    # Infraestrutura: você não precisa alterar daqui para baixo.
+    # -----------------------------------------------------------------------
+    def reiniciar(self) -> None:
+        """Volta ao estado inicial: FECHADO, sem falhas e sem histórico."""
+        self._estado = FECHADO
+        self.falhas_consecutivas = 0
+        self.aberto_em: float | None = None  # instante (self.relogio()) em que o circuito abriu
+        self.transicoes: list[tuple[float, str, str]] = []  # (instante, de, para): GET /circuito/historico
+
+    @property
+    def estado(self) -> str:
+        return self._estado
+
+    @estado.setter
+    def estado(self, novo: str) -> None:
+        # Toda vez que você escreve `self.estado = ...`, a mudança fica anotada
+        # no histórico e aparece nos logs (docker compose logs vitrine).
+        if novo != self._estado:
+            self.transicoes.append((self.relogio(), self._estado, novo))
+            log.info("⚡ circuito %s → %s", self._estado, novo)
+        self._estado = novo
