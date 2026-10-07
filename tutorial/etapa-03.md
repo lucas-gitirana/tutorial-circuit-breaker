@@ -1,39 +1,59 @@
-# Etapa 3 — Abrindo o circuito
+![Mapa: falha em cascata](tutorial/img/mapa-cascata.svg)
 
-**Objetivo:** implementar a transição **FECHADO → ABERTO** do circuit breaker.
+📍 **Você está aqui:** no mesmo caminho. Agora, uma falha mais traiçoeira: o
+recomendacoes não quebra, ele fica **lento**.
 
-O arquivo `servicos/vitrine/circuit_breaker.py` foi aberto ao lado. O método
-`chamar` já está pronto e segue este fluxo:
+## 1. Ligue o modo "lento"
 
-```text
-chamar(funcao)
-  ├─ _permite_chamada()?  não ──▶ lança CircuitoAbertoError (sem chamar a função)
-  │                       sim
-  ├─ executa funcao()
-  │     ├─ lançou exceção ──▶ _registrar_falha() e repassa a exceção
-  │     └─ deu certo      ──▶ _registrar_sucesso() e devolve o resultado
+No modo **`lento`**, o recomendacoes responde certinho, mas só depois de
+**5 segundos**, como um serviço sobrecarregado ou numa rede ruim.
+
+**`POST http://localhost:8022/falhas`**
+
+```json
+{ "modo": "lento" }
 ```
 
-Você vai completar os três métodos que ele usa.
+```bash
+curl -s -X POST localhost:8022/falhas \
+  -H 'Content-Type: application/json' \
+  -d '{"modo": "lento"}' \
+  -w '← HTTP %{http_code}\n'
+```
 
-## O que implementar (Etapa 3)
+## 2. Peça a página duas vezes
 
-| Método | Comportamento |
+```bash
+bash tutorial/chamar-vitrine.sh 2
+```
+
+```text
+#1  HTTP 200   5.02s  origem=servico   circuito=FECHADO
+#2  HTTP 200   5.25s  origem=servico   circuito=FECHADO
+```
+
+Deu **200**... mas cada página levou **5 segundos**. 🐢
+
+## 3. Por que lentidão é pior que erro?
+
+Enquanto espera, a vitrine **prende recursos**: uma thread, uma conexão,
+memória. Com poucos usuários, ninguém percebe. Com muitos:
+
+| Usuários por segundo | Cada um espera | Threads presas na vitrine |
+| --- | --- | --- |
+| 1 | 5 s | ~5 |
+| 100 | 5 s | ~500 |
+
+Uma hora as threads acabam e a vitrine **para de responder**, até as páginas
+que nem usam recomendações. O erro da Etapa 2 pelo menos era **rápido**.
+
+| Falha do recomendacoes | Efeito na vitrine |
 | --- | --- |
-| `_registrar_falha` | soma 1 em `self.falhas_consecutivas`; se chegou a `self.limite_falhas`, muda `self.estado` para `ABERTO` e guarda `self.aberto_em = self.relogio()` |
-| `_registrar_sucesso` | zera `self.falhas_consecutivas` (as falhas precisam ser **seguidas**) |
-| `_permite_chamada` | se `self.estado == ABERTO`, devolve `False`; caso contrário, `True` |
+| `erro` (Etapa 2) | a página cai, mas **na hora** |
+| `lento` (esta etapa) | a página **demora**, e a vitrine vai sendo sufocada |
 
-Por enquanto, ignore os comentários marcados como **Etapa 4**.
+Na próxima etapa você ensina a vitrine a **não esperar para sempre**.
 
-> **Por que `self.relogio()` e não `time.time()`?** O relógio é injetado no
-> construtor. Em produção ele é o `time.monotonic`. Nos testes, é um relógio
-> falso que só avança quando o teste manda, e assim dá para testar "passaram
-> 10 segundos" sem esperar 10 segundos.
+## 4. Clique em Verificar ✔
 
-## Teste
-
-Esta etapa é verificada **sem containers**: a verificação importa
-`circuit_breaker.py` e o exercita com uma função que sempre falha.
-
-Clique em **Verificar**.
+> Deixe o painel no modo `lento`: a verificação confere isso (e leva uns 5 s).

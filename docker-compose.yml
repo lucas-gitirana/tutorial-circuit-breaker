@@ -1,18 +1,19 @@
 # Ambiente do tutorial Circuit Breaker.
-#   vitrine       -> página de produto, chama o recomendacoes (http://localhost:8021)
-#   recomendacoes -> dependência instável, com painel de falhas (http://localhost:8022)
+#   vitrine       -> página de produto; chama o recomendacoes (http://localhost:8021)
+#   recomendacoes -> dependência instável, com painel de falhas  (http://localhost:8022)
 name: tutorial-circuit-breaker
 
 services:
   vitrine:
     build: ./servicos
+    restart: unless-stopped   # se um erro de digitação derrubar o serviço, ele volta assim que você corrigir
     volumes:
-      - ./servicos/vitrine:/app   # código montado: basta reiniciar o container
+      - ./servicos/vitrine:/app   # código montado: ao salvar, o serviço recarrega
     environment:
       URL_RECOMENDACOES: http://recomendacoes:8000
-      TIMEOUT_RECOMENDACOES_SEGUNDOS: "1"
-      CB_LIMITE_FALHAS: "3"
-      CB_TEMPO_ABERTO_SEGUNDOS: "10"
+      TIMEOUT_RECOMENDACOES_SEGUNDOS: "1"   # Etapa 4: quanto a vitrine espera, no máximo
+      CB_LIMITE_FALHAS: "3"                 # Etapa 6: falhas SEGUIDAS para abrir o circuito
+      CB_TEMPO_ABERTO_SEGUNDOS: "10"        # Etapa 8: tempo em ABERTO antes da chamada de teste
     ports:
       - "8021:8000"
     healthcheck:
@@ -21,10 +22,12 @@ services:
       timeout: 2s
       retries: 15
     depends_on:
-      - recomendacoes
+      recomendacoes:
+        condition: service_healthy
 
   recomendacoes:
     build: ./servicos
+    restart: unless-stopped
     volumes:
       - ./servicos/recomendacoes:/app
     ports:

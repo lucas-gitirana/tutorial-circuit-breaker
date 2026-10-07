@@ -24,16 +24,9 @@ from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
-
-
-class _OcultarHealthcheck(logging.Filter):
-    """Esconde dos logs as chamadas do healthcheck do Docker a /saude."""
-
-    def filter(self, registro: logging.LogRecord) -> bool:
-        return "/saude" not in registro.getMessage()
-
-
-logging.getLogger("werkzeug").addFilter(_OcultarHealthcheck())
+app.json.sort_keys = False
+app.json.compact = False  # respostas indentadas: mais fáceis de ler no terminal
+logging.getLogger("werkzeug").setLevel(logging.WARNING)  # logs mostram só o que importa
 
 MODOS = ("normal", "erro", "lento")
 ATRASO_MODO_LENTO = 5.0
@@ -53,6 +46,7 @@ def recomendar(produto_id: str):
     with trava:
         estado["requisicoes_recebidas"] += 1
         modo = estado["modo"]
+    print(f"[recomendacoes] ← pedido de recomendações do produto {produto_id} (modo {modo})")
 
     if modo == "erro":
         return jsonify(erro="Falha interna no serviço de recomendações."), 500
@@ -68,7 +62,7 @@ def mudar_modo():
         return jsonify(erro=f"Modo inválido. Use um destes: {', '.join(MODOS)}."), 400
     with trava:
         estado["modo"] = modo
-    print(f"[recomendacoes] modo de falha agora é: {modo}")
+    print(f"[recomendacoes] painel de falhas: modo agora é '{modo}'")
     return jsonify(modo=modo)
 
 

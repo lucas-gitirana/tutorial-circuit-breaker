@@ -1,36 +1,65 @@
-# Etapa 4 — Recuperando: o estado MEIO_ABERTO
+![Mapa: timeout](tutorial/img/mapa-timeout.svg)
 
-**Objetivo:** permitir que o circuito **feche sozinho** quando a dependência
-se recuperar.
+📍 **Você está aqui:** na chamada da vitrine ao recomendacoes (a seta com o
+**timeout 1 s**). Primeira atitude: **falhar rápido**.
 
-Do jeito que está, o circuito abre e nunca mais fecha. Mas como saber se o
-`recomendacoes` voltou sem chamá-lo? A resposta é o estado **MEIO_ABERTO**:
-depois de `tempo_aberto` segundos, o circuito deixa **uma chamada de teste**
-passar.
+## O que é timeout?
 
-```text
-            limite de falhas                    passou tempo_aberto
- FECHADO ───────────────────────▶ ABERTO ───────────────────────────▶ MEIO_ABERTO
-    ▲                               ▲                                     │
-    │                               └──────── teste falhou ───────────────┤
-    └──────────────────────────────────────── teste deu certo ────────────┘
+**Timeout** é o tempo máximo que você aceita esperar. Passou disso, desiste.
+É o que você faz ao telefone: se ninguém atende em 30 segundos, você desliga
+em vez de ficar ouvindo o sinal sonoro para sempre.
+
+Hoje a vitrine chama o recomendacoes **sem timeout**: espera o tempo que ele
+quiser. Com o modo `lento`, isso dá 5 segundos por página.
+
+O limite já está configurado no `docker-compose.yml` e chega ao Python na
+variável `TIMEOUT_SEGUNDOS`:
+
+| No `docker-compose.yml` | No `integracao.py` |
+| --- | --- |
+| `TIMEOUT_RECOMENDACOES_SEGUNDOS: "1"` | `TIMEOUT_SEGUNDOS = 1.0` |
+
+## 🐍 Python rápido
+
+| Código | Significa |
+| --- | --- |
+| `requests.get(url)` | faz um `GET` e **espera** a resposta, sem limite |
+| `requests.get(url, timeout=2)` | espera no máximo 2 s. Passou disso, **lança uma exceção** (`ReadTimeout`) |
+
+## ✏️ Faça
+
+Abaixo do marcador **Etapa 4**, acrescente o `timeout` na chamada (a linha já
+existe, é só mudar o final dela) e complete o `___`:
+
+```python
+    resposta = requests.get(f"{URL_RECOMENDACOES}/recomendacoes/{produto_id}", timeout=___)
 ```
 
-## O que implementar (Etapa 4)
+> Dica: use a variável `TIMEOUT_SEGUNDOS`, definida no topo do arquivo.
 
-Continue em `servicos/vitrine/circuit_breaker.py`:
+**Salve** o arquivo (`Ctrl+S`).
 
-| Método | O que acrescentar |
-| --- | --- |
-| `_permite_chamada` | se está `ABERTO` **e** `self.relogio() - self.aberto_em >= self.tempo_aberto`: muda para `MEIO_ABERTO` e devolve `True` |
-| `_registrar_sucesso` | se está `MEIO_ABERTO`, o teste deu certo: muda para `FECHADO` |
-| `_registrar_falha` | se está `MEIO_ABERTO`, o teste falhou: volta para `ABERTO` **na hora** (sem esperar o limite) e reinicia `self.aberto_em` |
+## 🧪 Teste: o recomendacoes ainda está lento
 
-> Uma única falha em MEIO_ABERTO já reabre o circuito. A dependência acabou de
-> provar que ainda não está bem, então não há por que insistir.
+```bash
+bash tutorial/chamar-vitrine.sh 2
+```
 
-## Teste
+```text
+#1  HTTP 502   1.01s  A vitrine falhou porque o serviço de recomendações falhou: ReadTimeout
+#2  HTTP 502   1.01s  A vitrine falhou porque o serviço de recomendações falhou: ReadTimeout
+```
 
-Também verificada sem containers. O relógio falso simula a passagem do tempo.
+| | Antes | Agora |
+| --- | --- | --- |
+| Tempo por página | 5 s | **1 s** ✅ |
+| Resposta | 200 | **502** 🤔 |
 
-Clique em **Verificar**.
+A vitrine agora **falha rápido**: não fica mais sufocada esperando. Mas o
+timeout virou uma exceção (`ReadTimeout`), e a página caiu do mesmo jeito que
+na Etapa 2. Falta um **plano B**: é a próxima etapa.
+
+## Clique em Verificar ✔
+
+> Deu erro de conexão? Pode ser um erro de digitação no Python. Veja com
+> `docker compose logs vitrine --tail 20`.

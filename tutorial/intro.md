@@ -1,74 +1,87 @@
-# Padrão Circuit Breaker na prática
+## O problema
 
-**Tempo estimado:** 35 minutos · **Linguagem:** Python (Flask) · **Infra:** Docker Compose
+Numa loja online, a **página de um produto** é montada por **dois serviços**:
 
-## O problema: falhas em cascata
+| Serviço | O que faz na página |
+| --- | --- |
+| **vitrine** | mostra nome e preço, que ela mesma guarda |
+| **recomendacoes** | sugere outros produtos ("quem comprou, levou também...") |
 
-Em microsserviços, um serviço depende de outros pela rede, e a rede falha.
-Quando uma dependência fica **lenta** ou **fora do ar**, quem a chama fica
-esperando, prende threads e conexões e logo também para de responder. A
-falha se espalha de serviço em serviço até derrubar o sistema inteiro
-(Richardson, 2018).
+As recomendações são um **detalhe** da página. Mas, para montá-la, a vitrine
+**chama** o recomendacoes pela rede e **espera** a resposta.
 
-Bruce e Pereira (2019) resumem como um serviço deve se comportar diante de falhas:
+E se o recomendacoes der **erro**? E se ele ficar **lento** e demorar 5
+segundos para responder? **A página inteira cai junto?**
 
-1. **Falhar rápido**: comunicar a falha logo, em vez de gastar recursos
-   esperando uma resposta que pode nunca chegar.
-2. **Parar de insistir**: se uma dependência falha com frequência, deixar de
-   enviar requisições até que ela se recupere.
+Quando a falha de um serviço derruba quem depende dele, temos uma **falha em
+cascata**. Em microsserviços, isso pode derrubar o sistema inteiro.
 
 ## A ideia do Circuit Breaker
 
-O padrão funciona como um **disjuntor elétrico**. A chamada à dependência é
-envolvida por um objeto que conta as falhas. Ao atingir um limite, o circuito
-**abre** e as próximas chamadas falham na hora, sem nem tentar (Fowler, 2014).
-O circuito tem três estados:
+Duas atitudes protegem a vitrine:
+
+1. **Falhar rápido**: não esperar para sempre por quem não responde.
+2. **Parar de insistir**: se o recomendacoes falhou várias vezes seguidas,
+   não adianta chamá-lo de novo agora. Melhor dar um tempo para ele se recuperar.
+
+O **circuit breaker** (disjuntor) cuida da segunda atitude. É o mesmo disjuntor
+do quadro de luz da sua casa:
+
+| | Disjuntor elétrico | **Circuit breaker** (este tutorial) |
+| --- | --- | --- |
+| Vigia | a corrente elétrica | as chamadas a outro serviço |
+| Desarma quando | há um curto-circuito | há **falhas seguidas demais** |
+| Desarmado | a energia não passa | as chamadas **nem saem**: falham na hora |
+| Religa | alguém sobe a alavanca | **sozinho**, depois de testar se o serviço voltou |
+
+O disjuntor tem **três estados**:
+
+![Estados do disjuntor](tutorial/img/estados-geral.svg)
 
 | Estado | Comportamento |
 | --- | --- |
-| **FECHADO** | chamadas passam normalmente; falhas seguidas são contadas |
-| **ABERTO** | chamadas são recusadas imediatamente; usa-se um *fallback* |
-| **MEIO_ABERTO** | depois de um tempo, uma chamada de teste é liberada: se der certo, o circuito fecha; se falhar, reabre |
+| **FECHADO** | tudo normal: as chamadas passam e as falhas seguidas são contadas |
+| **ABERTO** | as chamadas são recusadas **na hora**, sem nem tentar |
+| **MEIO_ABERTO** | depois de um tempo, **uma** chamada de teste passa: se der certo, fecha; se falhar, reabre |
 
-## O cenário
+Este é o mapa do sistema que você vai proteger. Ele aparece em toda etapa,
+destacando a parte em que você está:
 
-```text
-                       GET /produtos/1
-   cliente ──────────▶ ┌──────────────┐  GET /recomendacoes/1  ┌─────────────────┐
-                       │   vitrine    │ ─────────────────────▶ │  recomendacoes  │
-                       │  (porta 8021)│ ◀───────────────────── │  (porta 8022)   │
-                       └──────────────┘                        └─────────────────┘
-                        dados do produto                        painel de falhas:
-                        + recomendações                         normal | erro | lento
-```
+![Mapa do sistema](tutorial/img/mapa-geral.svg)
 
-A **vitrine** monta a página de um produto e busca recomendações em outro
-serviço. O **recomendacoes** tem um "painel de falhas" para simular os
-problemas do mundo real: responder com erro ou demorar 5 segundos.
+## As ferramentas
 
-## O que você vai fazer
-
-1. Provocar falhas e ver a vitrine cair junto (falha em cascata).
-2. Adicionar **timeout** e **fallback**.
-3. Implementar o circuit breaker: **FECHADO → ABERTO**.
-4. Implementar a recuperação: **ABERTO → MEIO_ABERTO → FECHADO**.
-5. Proteger a vitrine com o circuit breaker e vê-lo em ação.
+| Peça | O que é | Papel aqui |
+| --- | --- | --- |
+| **Docker Compose** | sobe vários containers com um único comando, a partir do `docker-compose.yml` | liga os 2 serviços do mapa |
+| **Flask** | microframework web em Python | faz a API HTTP de cada serviço |
+| **requests** | biblioteca Python para fazer chamadas HTTP | a vitrine usa para chamar o recomendacoes |
+| **Painel de falhas** | uma rota do recomendacoes (`POST /falhas`) | **você** decide quando ele funciona, dá erro ou fica lento |
+| **curl** | faz requisições HTTP pelo terminal | é o "cliente" que você vai usar |
 
 ## Como funciona este tutorial
 
-- Blocos de comando têm um botão **▶ Executar**, que roda o comando no terminal integrado.
-- Etapas com avaliação têm o botão **Verificar**. Se algo falhar, leia a saída:
-  ela diz o que está faltando.
-- Os arquivos que você vai editar abrem sozinhos, na linha do `TODO`.
+- **▶ Executar**, embaixo de um bloco de comando, roda o comando no terminal.
+- **Verificar** confere o seu código e diz o que falta quando algo dá errado.
+- O arquivo a editar abre sozinho, ao lado. Procure o marcador **✏️**.
+- Os serviços recarregam sozinhos quando você **salva** um arquivo (`Ctrl+S`).
 
 ## Preparando o ambiente
 
-Ao abrir esta introdução, o terminal já começou a subir os containers. Se
-precisar rodar de novo:
+Ao abrir esta tela, o terminal já começou a rodar:
 
 ```bash
 docker compose up -d --build --wait
 ```
 
+- `up`: cria e liga os containers descritos no `docker-compose.yml`;
+- `-d`: roda em segundo plano e devolve o terminal para você;
+- `--build`: constrói a imagem dos serviços Python antes de subir;
+- `--wait`: só termina quando todos os serviços estiverem **saudáveis**
+  (respondendo). Assim você não começa com o ambiente pela metade.
+
+Na primeira vez demora 1 ou 2 minutos, porque as imagens são baixadas. Quando o
+terminal voltar ao prompt, clique em **Começar**.
+
 > Pré-requisitos: Docker com Docker Compose e Python 3 (usado pelas
-> verificações). No GitHub Codespaces, tudo já vem instalado.
+> verificações). No GitHub Codespaces já vem tudo instalado.
