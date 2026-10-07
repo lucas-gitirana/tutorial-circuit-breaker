@@ -1,53 +1,82 @@
-# Etapa 5 — Circuit breaker em ação
+![Mapa: fallback](tutorial/img/mapa-fallback.svg)
 
-**Objetivo:** proteger a chamada da vitrine com o circuit breaker e observar
-os três estados funcionando de verdade.
+📍 **Você está aqui:** dentro da vitrine, na seta **falhou?** que leva ao
+**fallback**.
 
-## O que fazer
+## O que é fallback?
 
-Em `servicos/vitrine/integracao.py`, na função `obter_recomendacoes`:
+**Fallback** é o **plano B**: uma resposta menos boa, porém útil, para quando
+a dependência falha. Se o GPS perde o sinal, ele não apaga o mapa: mostra a
+última posição conhecida.
 
-1. troque a chamada direta `buscar_no_servico(produto_id)` por
-   `disjuntor.chamar(buscar_no_servico, produto_id)`;
-2. trate também `CircuitoAbertoError`, devolvendo o mesmo fallback.
+Aqui, o plano B já está pronto no topo do `integracao.py`:
 
-O `disjuntor` já foi criado no topo do arquivo com `limite_falhas=3` e
-`tempo_aberto=10` segundos (variáveis `CB_*` do `docker-compose.yml`).
-
-## Veja o circuito abrir
-
-```bash
-docker compose restart vitrine && sleep 2
-echo "Antes:  $(curl -s localhost:8022/estatisticas)"
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "erro"}'
-bash tutorial/chamar-vitrine.sh 6
-echo "Depois: $(curl -s localhost:8022/estatisticas)"
+```python
+RECOMENDACOES_PADRAO = ["Mais vendidos da semana", "Ofertas do dia"]
 ```
 
-Nas três primeiras chamadas, a vitrine tentou o `recomendacoes` e falhou. A
-partir da terceira falha o circuito **abriu**, e as chamadas seguintes nem
-saíram da vitrine. Compare o contador do `recomendacoes` antes e depois: ele
-aumentou só 3, não 6.
+Não é personalizado, mas a página **continua de pé**.
 
-## Veja o circuito fechar
+## 🐍 Python rápido: `try` / `except`
 
-Recupere o serviço e chame a vitrine logo em seguida:
-
-```bash
-curl -s -w '\n' -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "normal"}'
-bash tutorial/chamar-vitrine.sh 1
+```python
+try:
+    ...                                  # tenta fazer isto
+except requests.RequestException:
+    ...                                  # se der QUALQUER erro de HTTP, faz isto
 ```
 
-Ainda vem `fallback`: o circuito está aberto e não sabe que o serviço voltou.
-Espere os 10 segundos e chame de novo:
+`requests.RequestException` pega todos os problemas de uma chamada HTTP:
+timeout, conexão recusada e respostas de erro (4xx/5xx).
+
+## ✏️ Faça
+
+Abaixo do marcador **Etapa 5**, **troque** a linha
+`return buscar_no_servico(produto_id), "servico"` por este bloco e complete o
+`___`:
+
+```python
+    try:
+        return buscar_no_servico(produto_id), "servico"
+    except requests.RequestException:
+        return ___, "fallback"
+```
+
+> Dica: o plano B é a lista `RECOMENDACOES_PADRAO`.
+
+**Salve** (`Ctrl+S`).
+
+## 🧪 Teste: o recomendacoes ainda está lento
 
 ```bash
-sleep 10
 bash tutorial/chamar-vitrine.sh 2
 ```
 
-A primeira chamada foi a de teste (MEIO_ABERTO). Como deu certo, o circuito
-**fechou** e tudo voltou ao normal sem intervenção humana.
+```text
+#1  HTTP 200   1.12s  origem=fallback  circuito=FECHADO
+#2  HTTP 200   1.12s  origem=fallback  circuito=FECHADO
+```
 
-Clique em **Verificar**. A verificação repete esse experimento e leva cerca de
-15 segundos.
+**200** em **1 s**, com as recomendações do plano B. A página sobreviveu! ✅
+
+## 🤔 Ainda não basta
+
+Conte quantos pedidos o recomendacoes recebeu antes e depois de 3 páginas:
+
+```bash
+curl -s localhost:8022/estatisticas
+bash tutorial/chamar-vitrine.sh 3
+curl -s localhost:8022/estatisticas
+```
+
+O contador subiu **3**. A vitrine **sabe** que o recomendacoes está mal, mas
+continua chamando ele **toda vez**:
+
+- cada página ainda **paga 1 s** de espera pelo timeout;
+- o recomendacoes, que já está sobrecarregado, continua **recebendo carga**,
+  o que atrapalha a recuperação dele.
+
+Falta a segunda atitude: **parar de insistir**. É o trabalho do disjuntor,
+que você vai construir nas próximas 4 etapas.
+
+## Clique em Verificar ✔
