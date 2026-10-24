@@ -32,8 +32,8 @@ timeout, conexão recusada e respostas de erro (4xx/5xx).
 ## ✏️ Faça
 
 Abaixo do marcador **Etapa 5**, **troque** a linha
-`return buscar_no_servico(produto_id), "servico"` por este bloco e complete o
-`___`:
+`return buscar_no_servico(produto_id), "servico"` por este bloco de código abaixo e complete o
+`___` com `RECOMENDACOES_PADRAO`:
 
 ```python
     try:
@@ -41,8 +41,6 @@ Abaixo do marcador **Etapa 5**, **troque** a linha
     except requests.RequestException:
         return ___, "fallback"
 ```
-
-> Dica: o plano B é a lista `RECOMENDACOES_PADRAO`.
 
 **Salve** (`Ctrl+S`).
 
@@ -61,11 +59,21 @@ bash tutorial/chamar-vitrine.sh 2
 
 ## 🤔 Ainda não basta
 
-Conte quantos pedidos o recomendacoes recebeu antes e depois de 3 páginas:
+O endpoint de `/estatisticas` do serviço recomendacoes permite visualizar quantas chamadas esse serviço recebeu. Rode o comando abaixo para verificá-las.
 
 ```bash
 curl -s localhost:8022/estatisticas
+```
+
+Agora, execute novamente três chamadas para o serviço de vitrine.
+
+```bash
 bash tutorial/chamar-vitrine.sh 3
+```
+
+Realizadas as três chamadas, conte quantos pedidos o recomendacoes recebeu depois de 3 páginas:
+
+```bash
 curl -s localhost:8022/estatisticas
 ```
 

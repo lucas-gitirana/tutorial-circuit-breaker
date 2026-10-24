@@ -9,6 +9,7 @@ Este bloco derruba o recomendacoes, abre o circuito com 3 falhas, conserta o
 recomendacoes e pede **mais uma** página logo em seguida:
 
 ```bash
+curl -s -X POST localhost:8021/circuito/reiniciar
 curl -s -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "lento"}'
 bash tutorial/chamar-vitrine.sh 3
 curl -s -X POST localhost:8022/falhas -H 'Content-Type: application/json' -d '{"modo": "normal"}'

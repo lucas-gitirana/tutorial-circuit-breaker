@@ -77,12 +77,12 @@ class CircuitBreaker:
     def _registrar_falha(self) -> None:
         """Chamado quando a função protegida lançou uma exceção."""
 
-        # ═══ Etapa 9 · MEIO_ABERTO: a chamada de teste falhou ══════════════
+        # ═══ Etapa 9 · FALHA: a chamada de teste falhou ══════════════
         # ✏️  Escreva aqui o `if` que reabre o circuito na hora.
 
 
 
-        # ═══ Etapa 6 · contar a falha e, no limite, ABRIR ══════════════════
+        # ═══ Etapa 6 · FALHA ══════════════════
         # ✏️  Escreva aqui as 4 linhas: somar 1 e, se chegou ao limite, abrir.
 
 
@@ -90,12 +90,12 @@ class CircuitBreaker:
     def _registrar_sucesso(self) -> None:
         """Chamado quando a função protegida terminou sem exceção."""
 
-        # ═══ Etapa 6 · um sucesso zera a contagem ══════════════════════════
+        # ═══ Etapa 6 · SUCESSO ══════════════════════════
         # ✏️  Escreva aqui a linha que zera as falhas seguidas.
 
 
 
-        # ═══ Etapa 9 · MEIO_ABERTO: a chamada de teste deu certo ═══════════
+        # ═══ Etapa 9 · SUCESSO: a chamada de teste deu certo ═══════════
         # ✏️  Escreva aqui o `if` que fecha o circuito.
 
 

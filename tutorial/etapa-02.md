@@ -49,4 +49,4 @@ dependessem da vitrine, cairiam também, como peças de dominó.
 
 ## 4. Clique em Verificar ✔
 
-> Deixe o painel no modo `erro`: a verificação confere isso.
+> O botão abaixo verifica se o painel está no modo `erro`.

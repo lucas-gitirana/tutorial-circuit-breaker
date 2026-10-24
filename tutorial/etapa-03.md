@@ -56,4 +56,4 @@ Na próxima etapa você ensina a vitrine a **não esperar para sempre**.
 
 ## 4. Clique em Verificar ✔
 
-> Deixe o painel no modo `lento`: a verificação confere isso (e leva uns 5 s).
+> O botão abaixo verifica se o painel está no modo `erro` (e leva uns 5 s).

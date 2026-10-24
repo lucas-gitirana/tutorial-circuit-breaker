@@ -28,14 +28,12 @@ variável `TIMEOUT_SEGUNDOS`:
 
 ## ✏️ Faça
 
-Abaixo do marcador **Etapa 4**, acrescente o `timeout` na chamada (a linha já
-existe, é só mudar o final dela) e complete o `___`:
+Abaixo do marcador **Etapa 4**, acrescente a variável `TIMEOUT_SEGUNDOS` na chamada (a linha já
+existe, é só adicionar o novo parâmetro ao final conforme o exemplo abaixo):
 
 ```python
     resposta = requests.get(f"{URL_RECOMENDACOES}/recomendacoes/{produto_id}", timeout=___)
 ```
-
-> Dica: use a variável `TIMEOUT_SEGUNDOS`, definida no topo do arquivo.
 
 **Salve** o arquivo (`Ctrl+S`).
 

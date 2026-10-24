@@ -49,8 +49,8 @@ ainda funciona, e a contagem recomeça.
 
 ## ✏️ Faça 1: contar e abrir
 
-Abaixo do marcador **Etapa 6 · contar a falha** (em `_registrar_falha`),
-escreva e complete o `___`:
+Abaixo do marcador **"Etapa 6 · FALHA"** (em `_registrar_falha`),
+cole o código abaixo e complete o `___` com `self.limite_falhas`:
 
 ```python
         self.falhas_consecutivas += 1
@@ -59,12 +59,12 @@ escreva e complete o `___`:
             self.aberto_em = self.relogio()     # anota QUANDO abriu (a Etapa 8 usa)
 ```
 
-> Dica: o limite fica em `self.limite_falhas`. Atenção à **indentação**: 8
-> espaços, alinhado com o comentário do marcador.
+> **Atenção:** mantenha a mesma **indentação** do bloco acima (8
+> espaços, alinhado com o comentário do marcador).
 
 ## ✏️ Faça 2: um sucesso zera a contagem
 
-Abaixo do marcador **Etapa 6 · um sucesso** (em `_registrar_sucesso`), escreva:
+Abaixo do marcador **"Etapa 6 · SUCESSO"** (em `_registrar_sucesso`), escreva:
 
 ```python
         self.falhas_consecutivas = 0
@@ -76,8 +76,3 @@ Abaixo do marcador **Etapa 6 · um sucesso** (em `_registrar_sucesso`), escreva:
 
 Esta verificação **não precisa dos containers**: ela importa o
 `circuit_breaker.py` e o testa com uma função que sempre falha.
-
-> **Como testar "passaram 10 segundos" sem esperar 10 segundos?** O disjuntor
-> não lê a hora direto do sistema: ele usa `self.relogio()`, recebido no
-> construtor. Na vitrine, é o relógio de verdade. Na verificação, é um
-> **relógio falso**, que só anda quando o teste manda.

@@ -15,7 +15,7 @@ sentido esperar 3 falhas: o serviço acabou de provar que ainda não está bem.
 
 ## ✏️ Faça 1: o teste deu certo
 
-Abaixo do marcador **Etapa 9 · ... deu certo** (em `_registrar_sucesso`),
+Abaixo do marcador **"Etapa 9 · SUCESSO"** (em `_registrar_sucesso`),
 escreva:
 
 ```python
@@ -25,8 +25,8 @@ escreva:
 
 ## ✏️ Faça 2: o teste falhou
 
-Abaixo do marcador **Etapa 9 · ... falhou** (o primeiro de `_registrar_falha`,
-**acima** do código da Etapa 6), escreva e complete o `___`:
+Abaixo do marcador **"Etapa 9 · FALHA"** (em `_registrar_falha`,
+**acima** do código da Etapa 6), cole o código abaixo e complete o `___` com `ABERTO`:
 
 ```python
         if self.estado == MEIO_ABERTO:
@@ -42,6 +42,6 @@ Abaixo do marcador **Etapa 9 · ... falhou** (o primeiro de `_registrar_falha`,
 
 ## Clique em Verificar ✔
 
-Sem containers. Com esta etapa, o disjuntor está **completo**: as quatro setas
+Com esta etapa, o disjuntor está **completo**: as quatro setas
 do diagrama funcionam. Na próxima, ele sai dos testes e vai proteger a vitrine
 de verdade.

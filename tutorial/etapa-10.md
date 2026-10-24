@@ -26,8 +26,8 @@ O `disjuntor` já foi criado no topo do `integracao.py`, com os valores do
 
 ## ✏️ Faça
 
-No bloco `try`/`except` que você escreveu na Etapa 5 (abaixo do marcador
-**Etapa 5**), troque a chamada e o `except`. Complete os `___`:
+Substitua TODO o bloco `try`/`except` que você escreveu na Etapa 5 (abaixo do marcador
+**Etapa 5**) pelo código abaixo. Complete o primeiro `___` com `buscar_no_servico` e o segundo `___` com `CircuitoAbertoError`:
 
 ```python
     try:
@@ -36,7 +36,7 @@ No bloco `try`/`except` que você escreveu na Etapa 5 (abaixo do marcador
         return RECOMENDACOES_PADRAO, "fallback"
 ```
 
-> Dica: a exceção do circuito aberto é a `CircuitoAbertoError`, já importada
+> Dica: a exceção do circuito aberto, `CircuitoAbertoError`, já está importada
 > no topo do arquivo.
 
 **Salve** (`Ctrl+S`). A vitrine reinicia com o circuito **FECHADO**.

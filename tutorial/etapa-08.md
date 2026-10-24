@@ -25,8 +25,8 @@ período de teste, com ficha limpa.
 
 ## ✏️ Faça
 
-Abaixo do marcador **Etapa 8** (o primeiro de `_permite_chamada`, **acima** do
-`if` da Etapa 7), escreva e complete o `___`:
+Abaixo do marcador **"Etapa 8 · MEIO_ABERTO"** (**acima** do
+`if` da Etapa 7), cole o código abaixo e complete o `___` com `self.tempo_aberto`:
 
 ```python
         if self.estado == ABERTO and self.relogio() - self.aberto_em >= ___:
@@ -34,16 +34,11 @@ Abaixo do marcador **Etapa 8** (o primeiro de `_permite_chamada`, **acima** do
             self.falhas_consecutivas = 0    # período de teste: a contagem recomeça
 ```
 
-> Dica: o tempo de espera fica em `self.tempo_aberto`.
-
 **Por que acima do `if` da Etapa 7?** Se o tempo já passou, este `if` troca o
 estado para MEIO_ABERTO **antes** de o `if self.estado == ABERTO` ser
-avaliado. Aí a chamada não é recusada e segue até o `return True`. Se ficasse
+avaliado. A chamada, então, não é recusada e segue até o `return True`. Se ficasse
 abaixo, o `return False` da Etapa 7 terminaria a função antes.
 
 **Salve** (`Ctrl+S`).
 
 ## Clique em Verificar ✔
-
-Sem containers: o relógio falso avança 9,9 s, depois 10 s, e a verificação
-confere o estado **durante** a chamada de teste.

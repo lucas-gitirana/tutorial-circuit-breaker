@@ -26,8 +26,8 @@ return True           # só chega aqui quem não entrou no if
 
 ## ✏️ Faça
 
-Abaixo do marcador **Etapa 7** (em `_permite_chamada`), escreva e complete o
-`___`:
+Abaixo do marcador **Etapa 7** (em `_permite_chamada`), cole o código abaixo e complete o
+`___` com `False`:
 
 ```python
         if self.estado == ABERTO:
@@ -38,7 +38,7 @@ Abaixo do marcador **Etapa 7** (em `_permite_chamada`), escreva e complete o
 
 ## Clique em Verificar ✔
 
-Também **sem containers**: a verificação abre o circuito com 3 falhas e
+A verificação abre o circuito com 3 falhas e
 confere que a próxima chamada é recusada **sem** rodar a função.
 
 > Repare num problema: do jeito que está, o circuito abre e **nunca mais
